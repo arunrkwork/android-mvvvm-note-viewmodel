@@ -1,4 +1,4 @@
-package com.e.note;
+package com.e.note.utils;
 
 public class Const {
 

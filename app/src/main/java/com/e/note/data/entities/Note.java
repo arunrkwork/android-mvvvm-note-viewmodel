@@ -1,9 +1,10 @@
-package com.e.note;
+package com.e.note.data.entities;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.Index;
 import androidx.room.PrimaryKey;
+
+import com.e.note.utils.Const;
 
 @Entity(
         tableName = Const.TABLE_NOTE
