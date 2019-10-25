@@ -2,13 +2,17 @@ package com.e.note.ui.activity.main;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,17 +20,27 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.e.note.data.entities.Note;
+import com.e.note.data.network.RetrofitClient;
 import com.e.note.ui.adapter.NoteAdapter;
 import com.e.note.R;
 import com.e.note.ui.activity.NoteActivity;
 import com.e.note.ui.adapter.RecyclerViewClickListener;
+import com.e.note.utils.RecyclerItemTouchHelper;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_NOTE = 101;
@@ -38,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private NoteViewModel viewModel;
     NoteAdapter adapter;
     RecyclerView.LayoutManager layoutManager;
+    private CoordinatorLayout coordinatorLayout;
 
     Gson gson;
 
@@ -51,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viewModel = ViewModelProviders.of(this)
                 .get(NoteViewModel.class);
 
+        coordinatorLayout = findViewById(R.id.coordinator_layout);
         mRecyclerView = findViewById(R.id.mRecyclerView);
         list = new ArrayList<>();
 
@@ -61,8 +77,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         layoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(layoutManager);
 
+        ItemTouchHelper.SimpleCallback itemTouchHelperCallback = new RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this);
+        new ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(mRecyclerView);
 
-        RecyclerViewClickListener listener =  new RecyclerViewClickListener() {
+
+        RecyclerViewClickListener listener = new RecyclerViewClickListener() {
             @Override
             public void onClick(View view, int position) {
                 Note note = viewModel.getLiveData().getValue().get(position);
@@ -103,7 +122,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
 
-
     }
 
     private void update(Note note) {
@@ -136,8 +154,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
-            case (REQUEST_NOTE) : {
+        switch (requestCode) {
+            case (REQUEST_NOTE): {
                 if (resultCode == Activity.RESULT_OK) {
                     String json = data.getStringExtra("note");
                     Note note;
@@ -147,9 +165,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         viewModel.insertNote(note);
                     else
                         viewModel.udpateNote(note);
+
+                  //  saveToServer(note);
+
                 }
                 break;
             }
+        }
+    }
+
+    private void saveToServer(Note note) {
+        Call<ResponseBody> call = RetrofitClient
+                .getInstance()
+                .getApi()
+                .createNote(note.title, note.description);
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+
+                try {
+                    String s = response.body().string();
+                    Log.d(TAG, "onResponse: " + s);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.d(TAG, "onResponse: " + e.getMessage());
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d(TAG, "onFailure: " + t.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction, int position) {
+        if (viewHolder instanceof NoteAdapter.NoteHolder) {
+            // get the removed item name to display it in snack bar
+            final Note note = viewModel.getLiveData().getValue().get(viewHolder.getAdapterPosition());
+            String name = note.getTitle();
+
+            // backup of removed item for undo purpose
+            final Note deletedItem = note;
+            final int deletedIndex = viewHolder.getAdapterPosition();
+
+            viewModel.deleteNote(note);
+            // remove the item from recycler view
+            adapter.removeItem(viewHolder.getAdapterPosition());
+
+
+            // showing snack bar with Undo option
+            Snackbar snackbar = Snackbar
+                    .make(coordinatorLayout, name + " removed from list!", Snackbar.LENGTH_LONG);
+            snackbar.setAction("UNDO", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    // undo is selected, restore the deleted item
+                    adapter.restoreItem(deletedItem, deletedIndex);
+                    viewModel.insertNote(deletedItem);
+                }
+            });
+            snackbar.setActionTextColor(Color.YELLOW);
+            snackbar.show();
         }
     }
 }

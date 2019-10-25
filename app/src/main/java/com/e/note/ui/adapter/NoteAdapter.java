@@ -3,6 +3,7 @@ package com.e.note.ui.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -46,6 +47,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
         private RecyclerViewClickListener mListener;
         TextView txtTitle, txtDesc;
+        public RelativeLayout viewBackground, viewForeground;
 
         public NoteHolder(@NonNull View itemView, RecyclerViewClickListener listener) {
             super(itemView);
@@ -53,6 +55,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             itemView.setOnClickListener(this);
             txtTitle = itemView.findViewById(R.id.txtTitle);
             txtDesc = itemView.findViewById(R.id.txtDesc);
+            viewBackground = itemView.findViewById(R.id.view_background);
+            viewForeground = itemView.findViewById(R.id.view_foreground);
         }
 
         @Override
@@ -64,6 +68,20 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     public void addItems(List<Note> mList){
         list = mList;
         notifyDataSetChanged();
+    }
+
+    public void removeItem(int position) {
+        list.remove(position);
+        // notify the item removed by position
+        // to perform recycler view delete animations
+        // NOTE: don't call notifyDataSetChanged()
+        notifyItemRemoved(position);
+    }
+
+    public void restoreItem(Note note, int position) {
+        list.add(position, note);
+        // notify item added by position
+        notifyItemInserted(position);
     }
 
 }

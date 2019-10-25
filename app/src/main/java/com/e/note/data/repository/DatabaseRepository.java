@@ -115,6 +115,43 @@ public class DatabaseRepository {
         }
     }
 
+
+    public void deleteNote(Note note) {
+        new DeleteNoteAsyncTask(mNoteDao).execute(note);
+    }
+
+    private class DeleteNoteAsyncTask extends AsyncTask<Note, String, Integer> {
+
+        private NoteDao noteDao;
+
+        public DeleteNoteAsyncTask(NoteDao noteDao) {
+            Log.d(TAG, "DeleteNoteAsyncTask: ");
+            this.noteDao = noteDao;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            Log.d(TAG, "onPreExecute: ");
+            progress.postValue(true);
+        }
+
+        @Override
+        protected Integer doInBackground(Note... notes) {
+            Log.d(TAG, "doInBackground: ");
+            int id = noteDao.deleteNote(notes[0]);
+            return id;
+        }
+
+        @Override
+        protected void onPostExecute(Integer id) {
+            super.onPostExecute(id);
+            Log.d(TAG, "onPostExecute: ");
+            progress.postValue(false);
+            updatedId.postValue(id);
+        }
+    }
+
     public MutableLiveData<Integer> getUpdatedId() {
         return updatedId;
     }

@@ -40,6 +40,10 @@ public class NoteViewModel extends AndroidViewModel {
         mDatabaseRepository.updateNote(note);
     }
 
+    public void deleteNote(Note note) {
+        mDatabaseRepository.deleteNote(note);
+    }
+
 
     public MutableLiveData<Boolean> getProgress() {
         return progress;

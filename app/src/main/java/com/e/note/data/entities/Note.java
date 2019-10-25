@@ -20,8 +20,6 @@ public class Note {
     @ColumnInfo( name = Const.KEY_DESC, typeAffinity = ColumnInfo.TEXT)
     public String description;
 
-
-
     public int getId() {
         return id;
     }
