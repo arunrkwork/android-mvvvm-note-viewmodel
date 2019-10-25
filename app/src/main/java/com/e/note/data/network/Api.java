@@ -1,5 +1,7 @@
 package com.e.note.data.network;
 
+import com.e.note.data.entities.Note;
+
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
@@ -10,7 +12,7 @@ public interface Api {
 
     @FormUrlEncoded
     @POST("note")
-    Call<ResponseBody> createNote(
+    Call<Note> createNote(
             @Field("title") String title,
             @Field("description") String description
     );

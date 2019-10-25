@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         viewModel.getLiveData().observe(this, new Observer<List<Note>>() {
             @Override
             public void onChanged(List<Note> notes) {
-                Log.d(TAG, "onChanged: id = " + notes.get(0).getId());
+//                Log.d(TAG, "onChanged: id = " + notes.get(0).getId());
                 adapter.addItems(notes);
             }
         });
@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     else
                         viewModel.udpateNote(note);
 
-                  //  saveToServer(note);
+                  // saveToServer(note);
 
                 }
                 break;
@@ -175,27 +175,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void saveToServer(Note note) {
-        Call<ResponseBody> call = RetrofitClient
+        Call<Note> call = RetrofitClient
                 .getInstance()
                 .getApi()
                 .createNote(note.title, note.description);
 
-        call.enqueue(new Callback<ResponseBody>() {
+        call.enqueue(new Callback<Note>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(Call<Note> call, Response<Note> response) {
 
-                try {
-                    String s = response.body().string();
-                    Log.d(TAG, "onResponse: " + s);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Log.d(TAG, "onResponse: " + e.getMessage());
-                }
+                Note s = response.body();
+                Log.d(TAG, "onResponse: " + s.getMessage());
 
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            public void onFailure(Call<Note> call, Throwable t) {
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
